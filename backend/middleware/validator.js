@@ -10,6 +10,7 @@ module.exports = async (req,res,next) => {
       ownerEmail: "21052245@kiit.ac.in",
       rollNo: "21052245",
     });
+    console.log(response)
     res.locals.accessData = {
         token_type: response.token_type,
         access_token: response.access_token,
