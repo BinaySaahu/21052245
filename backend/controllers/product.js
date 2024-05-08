@@ -3,58 +3,34 @@ const Product = require("../models/products");
 const dotenv = require("dotenv");
 dotenv.config();
 
+let products = []
+
 const getAllProducts = async (req, res) => {
     const{companyName,categoryName,n,minPrice, maxPrice} = req.params;
+    const {access_token} = res.locals.accessData
   try {
-    const res = await axios.get(`http://20.244.56.144/test/companies/${companyName}/categories/${categoryName}/products?top=${n}&minPrice=${minPrice}&maxPrice=${maxPrice}`,{headers:{
-        'Authorization': `Bearer ${process.env.access_token}`
+    const response = await axios.get(`http://20.244.56.144/test/companies/${companyName}/categories/${categoryName}/products?top=${n}&minPrice=${minPrice}&maxPrice=${maxPrice}`,{headers:{
+        'Authorization': `Bearer ${access_token}`
     }})
+    products = response
+    let Nprod = products.slice(0,n);
+    Nprod = Nprod.filter((p)=>{p.price >= Number(minPrice) && p.price <= Number(maxPrice)})
+    return res.status(200).json({data:Nprod})
   } catch (err) {
-    
+    return res.status(500).json({message:err.message})
   }
 };
 
-const category = async (req,res)=>{
-    const type = req.params.category;
-    console.log(type);
-    let obj = [];
-    try{
-        const products = await Product.find();
-        // console.log(products[0].category.includes(type));
-        if(products){
-            products.forEach(product => {
-              if(product.category.includes(type)){
-                obj.push(product);
-              }
-              
-            });
-            return res.status(200).json({message:"Found all products",products:obj});
-        }
-        else{
-            return res.status(404).json({message:"Cannot find the data"});
-        }
-
-    }catch(err){
-        return res.status(500).json({message:err});
-    }
-}
-
 const getAProduct = async (req,res)=>{
-  try{
-    const productName = req.params.productName;
-    const product = await Product.findOne({name:productName});
-    if(product){
-      return res.status(200).json({message:"Found",product:product});
-    }else{
-      return res.status(404).json({message:"Cannot find the product"});
+    const {id} = req.params;
+    const productDet = products.filter((p)=>p.id === id)
+    if(productDet[0]){
+        return res.status(200).json({data:productDet[0]})
     }
-
-  }catch(err){
-    return res.status(500).json({message:err})
-  }
-
+    else{
+        return res.status(404).json({message:"Cannot find the product with specified id."})
+    }
 }
 
-exports.getProducts = getProducts;
-exports.category = category;
+exports.getAllProducts = getAllProducts;
 exports.getAProduct = getAProduct;
